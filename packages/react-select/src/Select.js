@@ -611,14 +611,15 @@ export default class Select extends Component<Props, State> {
       context: { isDisabled: isOptionDisabled(options[nextFocus]) },
     });
   }
-  onChange = (newValue: ValueType, actionMeta: ActionMeta) => {
+  onChange = (newValue: ValueType, actionMeta: ActionMeta, event: Event) => {
     const { onChange, name } = this.props;
-    onChange(newValue, { ...actionMeta, name });
+    onChange(newValue, { ...actionMeta, name }, event);
   };
   setValue = (
     newValue: ValueType,
     action: ActionTypes = 'set-value',
-    option?: OptionType
+    option?: OptionType,
+    event: Event
   ) => {
     const { closeMenuOnSelect, isMulti } = this.props;
     this.onInputChange('', { action: 'set-value' });
@@ -628,9 +629,9 @@ export default class Select extends Component<Props, State> {
     }
     // when the select value should change, we should reset focusedValue
     this.clearFocusValueOnUpdate = true;
-    this.onChange(newValue, { action, option });
+    this.onChange(newValue, { action, option }, event);
   };
-  selectOption = (newValue: OptionType) => {
+  selectOption = (newValue: OptionType, event: Event) => {
     const { blurInputOnSelect, isMulti } = this.props;
     const { selectValue } = this.state;
 
@@ -640,7 +641,8 @@ export default class Select extends Component<Props, State> {
         this.setValue(
           selectValue.filter(i => this.getOptionValue(i) !== candidate),
           'deselect-option',
-          newValue
+          newValue,
+          event
         );
         this.announceAriaLiveSelection({
           event: 'deselect-option',
@@ -648,7 +650,7 @@ export default class Select extends Component<Props, State> {
         });
       } else {
         if (!this.isOptionDisabled(newValue, selectValue)) {
-          this.setValue([...selectValue, newValue], 'select-option', newValue);
+          this.setValue([...selectValue, newValue], 'select-option', newValue, event);
           this.announceAriaLiveSelection({
             event: 'select-option',
             context: { value: this.getOptionLabel(newValue) },
@@ -663,7 +665,7 @@ export default class Select extends Component<Props, State> {
       }
     } else {
       if (!this.isOptionDisabled(newValue, selectValue)) {
-        this.setValue(newValue, 'select-option');
+        this.setValue(newValue, 'select-option', undefined, event);
         this.announceAriaLiveSelection({
           event: 'select-option',
           context: { value: this.getOptionLabel(newValue) },
@@ -681,7 +683,7 @@ export default class Select extends Component<Props, State> {
       this.blurInput();
     }
   };
-  removeValue = (removedValue: OptionType) => {
+  removeValue = (removedValue: OptionType, event: Event) => {
     const { selectValue } = this.state;
     const candidate = this.getOptionValue(removedValue);
     const newValue = selectValue.filter(
@@ -690,7 +692,7 @@ export default class Select extends Component<Props, State> {
     this.onChange(newValue.length ? newValue : null, {
       action: 'remove-value',
       removedValue,
-    });
+    }, event);
     this.announceAriaLiveSelection({
       event: 'remove-value',
       context: {
@@ -699,11 +701,11 @@ export default class Select extends Component<Props, State> {
     });
     this.focusInput();
   };
-  clearValue = () => {
+  clearValue = (event: Event) => {
     const { isMulti } = this.props;
-    this.onChange(isMulti ? [] : null, { action: 'clear' });
+    this.onChange(isMulti ? [] : null, { action: 'clear' }, event);
   };
-  popValue = () => {
+  popValue = (event: Event) => {
     const { selectValue } = this.state;
     const lastSelectedValue = selectValue[selectValue.length - 1];
     const newValue = selectValue.slice(0, selectValue.length - 1);
@@ -716,7 +718,7 @@ export default class Select extends Component<Props, State> {
     this.onChange(newValue.length ? newValue : null, {
       action: 'pop-value',
       removedValue: lastSelectedValue,
-    });
+    }, event);
   };
 
   // ==============================
@@ -971,7 +973,8 @@ export default class Select extends Component<Props, State> {
     if (event && event.type === 'mousedown' && event.button !== 0) {
       return;
     }
-    this.clearValue();
+    event.persist();
+    this.clearValue(event);
     event.stopPropagation();
     this.openAfterFocus = false;
     if (event.type === 'touchend') {
@@ -1179,6 +1182,8 @@ export default class Select extends Component<Props, State> {
       }
     }
 
+    event.persist();
+
     // Block option hover events when the user has just pressed a key
     this.blockOptionHover = true;
     switch (event.key) {
@@ -1194,13 +1199,13 @@ export default class Select extends Component<Props, State> {
       case 'Backspace':
         if (inputValue) return;
         if (focusedValue) {
-          this.removeValue(focusedValue);
+          this.removeValue(focusedValue, event);
         } else {
           if (!backspaceRemovesValue) return;
           if (isMulti) {
-            this.popValue();
+            this.popValue(event);
           } else if (isClearable) {
-            this.clearValue();
+            this.clearValue(event);
           }
         }
         break;
@@ -1218,7 +1223,7 @@ export default class Select extends Component<Props, State> {
         ) {
           return;
         }
-        this.selectOption(focusedOption);
+        this.selectOption(focusedOption, event);
         break;
       case 'Enter':
         if (event.keyCode === 229) {
@@ -1229,7 +1234,7 @@ export default class Select extends Component<Props, State> {
         if (menuIsOpen) {
           if (!focusedOption) return;
           if (this.isComposing) return;
-          this.selectOption(focusedOption);
+          this.selectOption(focusedOption, event);
           break;
         }
         return;
@@ -1239,7 +1244,7 @@ export default class Select extends Component<Props, State> {
           this.onInputChange('', { action: 'menu-close' });
           this.onMenuClose();
         } else if (isClearable && escapeClearsValue) {
-          this.clearValue();
+          this.clearValue(event);
         }
         break;
       case ' ': // space
@@ -1251,7 +1256,7 @@ export default class Select extends Component<Props, State> {
           break;
         }
         if (!focusedOption) return;
-        this.selectOption(focusedOption);
+        this.selectOption(focusedOption, event);
         break;
       case 'ArrowUp':
         if (menuIsOpen) {
@@ -1310,7 +1315,7 @@ export default class Select extends Component<Props, State> {
       }
 
       const onHover = isDisabled ? undefined : () => this.onOptionHover(option);
-      const onSelect = isDisabled ? undefined : () => this.selectOption(option);
+      const onSelect = isDisabled ? undefined : event => { event.persist(); this.selectOption(option, event) };
       const optionId = `${this.getElementId('option')}-${id}`;
 
       return {
@@ -1521,8 +1526,8 @@ export default class Select extends Component<Props, State> {
             key={this.getOptionValue(opt)}
             index={index}
             removeProps={{
-              onClick: () => this.removeValue(opt),
-              onTouchEnd: () => this.removeValue(opt),
+              onClick: event => { event.persist(); this.removeValue(opt, event) },
+              onTouchEnd: event => { event.persist(); this.removeValue(opt, event) },
               onMouseDown: e => {
                 e.preventDefault();
                 e.stopPropagation();

@@ -19,7 +19,7 @@ export type Props = {
   inputValue?: string,
   menuIsOpen?: boolean,
   value?: ValueType,
-  onChange?: (ValueType, ActionMeta) => void,
+  onChange?: (ValueType, ActionMeta, Event) => void,
 };
 
 type StateProps<P> = $Diff<
@@ -85,8 +85,8 @@ const manageState = <C: {}>(
         return this.props[name](...args);
       }
     }
-    onChange = (value: any, actionMeta: ActionMeta) => {
-      this.callProp('onChange', value, actionMeta);
+    onChange = (value: any, actionMeta: ActionMeta, event: Event) => {
+      this.callProp('onChange', value, actionMeta, event);
       this.setState({ value });
     };
     onInputChange = (value: any, actionMeta: InputActionMeta) => {

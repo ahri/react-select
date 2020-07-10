@@ -487,7 +487,7 @@ cases(
       action: 'select-option',
       option: expectedActionMetaOption,
       name: BASIC_PROPS.name,
-    });
+    }, expect.objectContaining({preventDefault: expect.any(Function)}));
   },
   {
     'single select > option is clicked > should call onChange() prop with selected option': {
@@ -644,7 +644,7 @@ cases(
       action: 'deselect-option',
       option: expectedMetaOption,
       name: BASIC_PROPS.name,
-    });
+    }, expect.objectContaining({preventDefault: expect.any(Function)}));
   },
   {
     'option is clicked > should call onChange() prop with correct selected options and meta': {
@@ -1606,7 +1606,8 @@ test('multi select > call onChange with all values but last selected value and r
       action: 'pop-value',
       removedValue: { label: '2', value: 'two' },
       name: BASIC_PROPS.name,
-    }
+    },
+    expect.objectContaining({keyCode: 8, key: 'Backspace'})
   );
 });
 
@@ -1659,7 +1660,7 @@ cases(
       keyCode: 8,
       key: 'Backspace',
     });
-    expect(onChangeSpy).toHaveBeenCalledWith(null, expectedValue);
+    expect(onChangeSpy).toHaveBeenCalledWith(null, expectedValue, expect.objectContaining({keyCode: 8, key: 'Backspace'}));
   },
   {
     'and isMulti is false': {
@@ -1717,7 +1718,8 @@ test('multi select > clicking on X next to option will call onChange with all op
       action: 'remove-value',
       removedValue: { label: '4', value: 'four' },
       name: BASIC_PROPS.name,
-    }
+    },
+    expect.objectContaining({preventDefault: expect.any(Function)})
   );
 });
 
@@ -2308,7 +2310,7 @@ test('clear select by clicking on clear button > should not call onMenuOpen', ()
   expect(onChangeSpy).toBeCalledWith([], {
     action: 'clear',
     name: BASIC_PROPS.name,
-  });
+  }, expect.objectContaining({button: 0}));
 });
 
 test('clearing select using clear button to not call onMenuOpen or onMenuClose', () => {
@@ -2345,7 +2347,7 @@ test('multi select >  calls onChange when option is selected and isSearchable is
     action: 'select-option',
     option: selectedOption,
     name: BASIC_PROPS.name,
-  });
+  }, expect.objectContaining({button: 0}));
 });
 
 test('getOptionLabel() prop > to format the option label', () => {
@@ -2488,7 +2490,8 @@ test('hitting spacebar should select option if isSearchable is false', () => {
   });
   expect(onChangeSpy).toHaveBeenCalledWith(
     { label: '0', value: 'zero' },
-    { action: 'select-option', name: BASIC_PROPS.name }
+    { action: 'select-option', name: BASIC_PROPS.name },
+    expect.objectContaining({keyCode: 32, key: ' '})
   );
 });
 
@@ -2631,7 +2634,7 @@ test('to clear value when hitting escape if escapeClearsValue and isClearable ar
   expect(onInputChangeSpy).toHaveBeenCalledWith(null, {
     action: 'clear',
     name: BASIC_PROPS.name,
-  });
+  }, expect.objectContaining({keyCode: 27, key: 'Escape'}));
 });
 
 /**
